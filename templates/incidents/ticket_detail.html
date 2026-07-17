@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket #{{ ticket.id }} - ITmanager</title>
+</head>
+
+<body>
+    {% for message in messages %}
+    <p style="color: {% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}orange{% else %}green{% endif %};">{{ message }}</p>
+    {% endfor %}
+
+    <h2>Ticket #{{ ticket.id }}</h2>
+    <p><strong>Compagnie :</strong> {{ ticket.compagnie_aerienne }}</p>
+    <p><strong>Vol :</strong> {{ ticket.numero_vol }}</p>
+    <p><strong>Description :</strong> {{ ticket.description }}</p>
+    <p><strong>Zone :</strong> {{ ticket.zone }}</p>
+    <p><strong>Équipement :</strong> {{ ticket.equipement }}</p>
+    <p><strong>Priorité :</strong> {{ ticket.priorite }}</p>
+    <p><strong>Statut :</strong> {{ ticket.statut }}</p>
+    <p><strong>Créé par :</strong> {{ ticket.cree_par }}</p>
+    <p><strong>Assigné à :</strong> {{ ticket.assigne_a|default:"-" }}</p>
+
+    {% if request.user.role == 'superviseur' %}
+    <h3>Historique</h3>
+    <ul>
+        {% for h in historique %}
+        <li>{{ h.date_action }} — {{ h.utilisateur }} — {{ h.action }} ({{ h.ancien_statut }} → {{ h.nouveau_statut }})</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <p><strong>DEBUG:</strong> user={{ request.user }} | role={{ request.user.role }} | assigne_a={{ ticket.assigne_a }} | match={{ ticket.assigne_a|yesno:"oui,non" }}</p>
+
+    {% if ticket.assigne_a == request.user and ticket.statut == 'affecte' %}
+    <form method="post" action="{% url 'incidents:ticket_resoudre' ticket.pk %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit">✅ Marquer comme résolu</button>
+    </form>
+    {% if request.user.role == 'technicien' %}
+    <form method="post" action="{% url 'incidents:ticket_escalader' ticket.pk %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit">⬆️ Escalader vers ingénieur</button>
+    </form>
+    {% endif %}
+    {% endif %}
+
+    {% if request.user.role == 'helpdesk' and ticket.statut == 'resolu' %}
+    <a href="{% url 'incidents:ticket_cloturer' ticket.pk %}"><button>🔒 Clôturer le ticket</button></a>
+    {% endif %}
+
+    <br><br>
+    <a href="{% url 'incidents:ticket_list' %}">← Retour à la liste</a>
+</body>
+</html>

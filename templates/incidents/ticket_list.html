@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des tickets - ITmanager</title>
+</head>
+<body>
+    <h2>Tickets</h2>
+    {% if request.user.role == 'superviseur' %}
+<p><a href="{% url 'incidents:dashboard' %}">📊 Dashboard</a></p>
+{% endif %}
+    {% if request.user.role == 'helpdesk' %}
+<p><a href="{% url 'incidents:ticket_create' %}">+ Nouveau ticket</a></p>
+{% endif %}
+    <p>Connecté en tant que : {{ request.user.username }} ({{ request.user.role }})</p>
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>ID</th>
+            <th>Compagnie</th>
+            <th>Vol</th>
+            <th>Zone</th>
+            <th>Priorité</th>
+            <th>Statut</th>
+            <th>Assigné à</th>
+        </tr>
+        {% for ticket in tickets %}
+        <tr>
+            <td><a href="{% url 'incidents:ticket_detail' ticket.pk %}">{{ ticket.id }}</a></td>
+            <td>{{ ticket.compagnie_aerienne }}</td>
+            <td>{{ ticket.numero_vol }}</td>
+            <td>{{ ticket.zone }}</td>
+            <td>{{ ticket.priorite }}</td>
+            <td>{{ ticket.statut }}</td>
+            <td>{{ ticket.assigne_a|default:"-" }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

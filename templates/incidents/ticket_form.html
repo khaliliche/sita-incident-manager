@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Nouveau ticket - ITmanager</title>
+</head>
+<body>
+    <h2>Créer un ticket</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Créer le ticket</button>
+    </form>
+    <a href="{% url 'incidents:ticket_list' %}">← Retour à la liste</a>
+</body>
+</html>

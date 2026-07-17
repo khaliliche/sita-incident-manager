@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Clôturer le ticket #{{ ticket.id }}</title>
+</head>
+<body>
+    <h2>Clôturer le ticket #{{ ticket.id }}</h2>
+    <form method="post">
+        {% csrf_token %}
+        <label>Commentaire de clôture :</label><br>
+        <textarea name="commentaire" rows="4" cols="50"></textarea><br><br>
+        <button type="submit">Clôturer</button>
+    </form>
+    <a href="{% url 'incidents:ticket_detail' ticket.pk %}">← Annuler</a>
+</body>
+</html>

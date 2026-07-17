@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Superviseur - ITmanager</title>
+</head>
+<body>
+    <h2>Dashboard Superviseur</h2>
+    <p><strong>Total tickets :</strong> {{ total }}</p>
+    <p><strong>Durée moyenne de résolution :</strong> {{ duree_moyenne|default:"N/A" }}</p>
+
+    <h3>Par statut</h3>
+    <ul>
+        {% for s in par_statut %}
+        <li>{{ s.statut }} : {{ s.total }}</li>
+        {% endfor %}
+    </ul>
+
+    <h3>Par zone</h3>
+    <ul>
+        {% for z in par_zone %}
+        <li>{{ z.zone__nom }} : {{ z.total }}</li>
+        {% endfor %}
+    </ul>
+
+    <h3>Par priorité</h3>
+    <ul>
+        {% for p in par_priorite %}
+        <li>{{ p.priorite }} : {{ p.total }}</li>
+        {% endfor %}
+    </ul>
+
+    <h3>10 derniers tickets</h3>
+    <table border="1" cellpadding="5">
+        <tr><th>ID</th><th>Zone</th><th>Priorité</th><th>Statut</th><th>Assigné à</th></tr>
+        {% for t in tickets_recents %}
+        <tr>
+            <td><a href="{% url 'incidents:ticket_detail' t.pk %}">{{ t.id }}</a></td>
+            <td>{{ t.zone }}</td>
+            <td>{{ t.priorite }}</td>
+            <td>{{ t.statut }}</td>
+            <td>{{ t.assigne_a|default:"-" }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br>
+    <a href="{% url 'incidents:ticket_list' %}">← Retour à la liste</a>
+</body>
+</html>

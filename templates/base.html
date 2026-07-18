@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ITmanager{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #F7F8FA;
+            --panel: #FFFFFF;
+            --border: #E2E5EA;
+            --text: #1A1D23;
+            --text-dim: #6B7280;
+            --text-faint: #9CA3AF;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-soft: #EFF4FF;
+            --success: #16A34A;
+            --success-soft: #F0FDF4;
+            --warning: #D97706;
+            --warning-soft: #FFFBEB;
+            --danger: #DC2626;
+            --danger-soft: #FEF2F2;
+            --neutral: #6B7280;
+            --neutral-soft: #F3F4F6;
+            --radius: 6px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header.topbar {
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 56px;
+        }
+
+        .brand {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text);
+            text-decoration: none;
+            letter-spacing: -0.2px;
+        }
+
+        .brand .dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            background: var(--accent);
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        nav.mainnav {
+            display: flex;
+            gap: 4px;
+            font-size: 13px;
+        }
+
+        nav.mainnav a {
+            color: var(--text-dim);
+            text-decoration: none;
+            padding: 7px 12px;
+            border-radius: var(--radius);
+            font-weight: 500;
+        }
+
+        nav.mainnav a:hover {
+            color: var(--text);
+            background: var(--neutral-soft);
+        }
+
+        .userbox {
+            font-size: 13px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .userbox .role {
+            color: var(--text);
+            font-weight: 500;
+            background: var(--neutral-soft);
+            padding: 4px 10px;
+            border-radius: var(--radius);
+            font-size: 12px;
+        }
+
+        main {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        h2 {
+            font-size: 19px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 20px;
+            letter-spacing: -0.3px;
+        }
+
+        h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin: 28px 0 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            background: var(--bg);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--text-faint);
+            text-align: left;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13.5px;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #FAFBFC; }
+
+        .mono { font-variant-numeric: tabular-nums; color: var(--text-dim); }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12.5px;
+            font-weight: 500;
+            padding: 3px 0;
+        }
+
+        .badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .badge-P1 .dot, .badge-P2 .dot { background: var(--danger); }
+        .badge-P1, .badge-P2 { color: var(--danger); }
+        .badge-P3 .dot { background: var(--warning); }
+        .badge-P3 { color: var(--warning); }
+        .badge-P4 .dot, .badge-P5 .dot { background: var(--neutral); }
+        .badge-P4, .badge-P5 { color: var(--text-dim); }
+
+        .status-ouvert .dot { background: var(--neutral); }
+        .status-ouvert { color: var(--text-dim); }
+        .status-affecte .dot { background: var(--accent); }
+        .status-affecte { color: var(--accent); }
+        .status-en_cours .dot { background: var(--warning); }
+        .status-en_cours { color: var(--warning); }
+        .status-escalade .dot { background: var(--danger); }
+        .status-escalade { color: var(--danger); }
+        .status-resolu .dot { background: var(--success); }
+        .status-resolu { color: var(--success); }
+        .status-cloture .dot { background: var(--neutral); }
+        .status-cloture { color: var(--text-faint); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: #fff;
+            background: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            padding: 8px 14px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+        .btn-outline {
+            background: var(--panel);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover { background: var(--neutral-soft); }
+
+        .btn-danger {
+            background: var(--panel);
+            color: var(--danger);
+            border: 1px solid var(--border);
+        }
+
+        .btn-danger:hover { background: var(--danger-soft); border-color: var(--danger); }
+
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+        a.link { color: var(--accent); text-decoration: none; font-weight: 500; }
+        a.link:hover { text-decoration: underline; }
+
+        form p { margin-bottom: 14px; }
+
+        label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--text-dim);
+            margin-bottom: 5px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            padding: 9px 11px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13.5px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        .messages { margin-bottom: 18px; }
+        .messages p {
+            font-size: 13px;
+            font-weight: 500;
+            padding: 10px 14px;
+            border-radius: var(--radius);
+            margin-bottom: 8px;
+            border: 1px solid;
+        }
+        .messages .success-msg { border-color: #BBF0CD; color: var(--success); background: var(--success-soft); }
+        .messages .error-msg { border-color: #FBD5D5; color: var(--danger); background: var(--danger-soft); }
+        .messages .warning-msg { border-color: #FDE9C4; color: var(--warning); background: var(--warning-soft); }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
+        .stat-box { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+        .stat-box .num { font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+        .stat-box .label { font-size: 12.5px; color: var(--text-dim); margin-top: 4px; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header class="topbar">
+        <a href="{% url 'incidents:ticket_list' %}" class="brand"><span class="dot"></span>ITmanager</a>
+        {% if request.user.is_authenticated %}
+        <nav class="mainnav">
+            <a href="{% url 'incidents:ticket_list' %}">Tickets</a>
+            {% if request.user.role == 'superviseur' %}
+            <a href="{% url 'incidents:dashboard' %}">Dashboard</a>
+            <a href="{% url 'accounts:user_list' %}">Utilisateurs</a>
+            <a href="{% url 'core:settings' %}">Paramètres</a>
+            {% endif %}
+        </nav>
+        <div class="userbox">
+            <span class="role">{{ request.user.get_role_display }}</span>
+            <span>{{ request.user.username }}</span>
+            <a href="{% url 'accounts:logout' %}" class="link">Déconnexion</a>
+        </div>
+        {% endif %}
+    </header>
+    <main>
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <p class="{{ message.tags }}-msg">{{ message }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

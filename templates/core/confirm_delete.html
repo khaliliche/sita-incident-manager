@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Confirmer la suppression - ITmanager{% endblock %}
+{% block content %}
+<h2>Supprimer "{{ objet }}" ?</h2>
+<div class="panel">
+    <p style="color:var(--danger); margin-bottom:16px; font-size:13.5px;">Cette action est irréversible.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Oui, supprimer</button>
+        <a href="{% url 'core:settings' %}" class="btn btn-outline" style="margin-left:8px;">Annuler</a>
+    </form>
+</div>
+{% endblock %}

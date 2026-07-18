@@ -1,55 +1,71 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Ticket #{{ ticket.id }} - ITmanager</title>
-</head>
+{% extends 'base.html' %}
+{% block title %}Ticket #{{ ticket.pk }} - ITmanager{% endblock %}
+{% block content %}
+<h2>Ticket #{{ ticket.pk }} — Vol {{ ticket.numero_vol }} ({{ ticket.compagnie_aerienne }})</h2>
 
-<body>
-    {% for message in messages %}
-    <p style="color: {% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}orange{% else %}green{% endif %};">{{ message }}</p>
-    {% endfor %}
-
-    <h2>Ticket #{{ ticket.id }}</h2>
-    <p><strong>Compagnie :</strong> {{ ticket.compagnie_aerienne }}</p>
-    <p><strong>Vol :</strong> {{ ticket.numero_vol }}</p>
+<div class="panel">
+    <p>
+        <span class="badge badge-{{ ticket.priorite }}"><span class="dot"></span>{{ ticket.priorite }}</span>
+        &nbsp;&nbsp;
+        <span class="badge status-{{ ticket.statut }}"><span class="dot"></span>{{ ticket.get_statut_display }}</span>
+    </p>
+    <br>
     <p><strong>Description :</strong> {{ ticket.description }}</p>
-    <p><strong>Zone :</strong> {{ ticket.zone }}</p>
-    <p><strong>Équipement :</strong> {{ ticket.equipement }}</p>
-    <p><strong>Priorité :</strong> {{ ticket.priorite }}</p>
-    <p><strong>Statut :</strong> {{ ticket.statut }}</p>
-    <p><strong>Créé par :</strong> {{ ticket.cree_par }}</p>
-    <p><strong>Assigné à :</strong> {{ ticket.assigne_a|default:"-" }}</p>
-
-    {% if request.user.role == 'superviseur' %}
-    <h3>Historique</h3>
-    <ul>
-        {% for h in historique %}
-        <li>{{ h.date_action }} — {{ h.utilisateur }} — {{ h.action }} ({{ h.ancien_statut }} → {{ h.nouveau_statut }})</li>
-        {% endfor %}
-    </ul>
+    <p style="color:var(--text-dim); font-size:13px; margin-top:10px;">
+        Zone : {{ ticket.zone.nom|default:"-" }} ·
+        Équipement : {{ ticket.equipement.nom|default:"-" }} ·
+        Assigné à : {{ ticket.assigne_a|default:"—" }} ·
+        Créé par : {{ ticket.cree_par|default:"—" }} le {{ ticket.date_creation|date:"d/m/Y H:i" }}
+    </p>
+    {% if ticket.statut == 'cloture' %}
+    <p style="color:var(--text-dim); font-size:13px; margin-top:6px;">
+        Clôturé le {{ ticket.date_cloture|date:"d/m/Y H:i" }}
+        {% if ticket.commentaire_cloture %} — "{{ ticket.commentaire_cloture }}"{% endif %}
+    </p>
     {% endif %}
 
-    <p><strong>DEBUG:</strong> user={{ request.user }} | role={{ request.user.role }} | assigne_a={{ ticket.assigne_a }} | match={{ ticket.assigne_a|yesno:"oui,non" }}</p>
+    <div class="actions">
+        {% if ticket.assigne_a == request.user and ticket.statut != 'resolu' and ticket.statut != 'cloture' %}
+        <form method="post" action="{% url 'incidents:ticket_resoudre' ticket.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn">Marquer résolu</button>
+        </form>
+        {% if request.user.role == 'technicien' %}
+        <form method="post" action="{% url 'incidents:ticket_escalader' ticket.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Escalader</button>
+        </form>
+        {% endif %}
+        {% endif %}
 
-    {% if ticket.assigne_a == request.user and ticket.statut == 'affecte' %}
-    <form method="post" action="{% url 'incidents:ticket_resoudre' ticket.pk %}" style="display:inline;">
-        {% csrf_token %}
-        <button type="submit">✅ Marquer comme résolu</button>
-    </form>
-    {% if request.user.role == 'technicien' %}
-    <form method="post" action="{% url 'incidents:ticket_escalader' ticket.pk %}" style="display:inline;">
-        {% csrf_token %}
-        <button type="submit">⬆️ Escalader vers ingénieur</button>
-    </form>
-    {% endif %}
-    {% endif %}
+        {% if request.user.role == 'helpdesk' and ticket.statut == 'resolu' %}
+        <a href="{% url 'incidents:ticket_cloturer' ticket.pk %}" class="btn btn-outline">Clôturer</a>
+        {% endif %}
 
-    {% if request.user.role == 'helpdesk' and ticket.statut == 'resolu' %}
-    <a href="{% url 'incidents:ticket_cloturer' ticket.pk %}"><button>🔒 Clôturer le ticket</button></a>
-    {% endif %}
+        {% if request.user.role == 'helpdesk' and ticket.statut == 'escalade' %}
+        <a href="{% url 'incidents:ticket_reaffecter' ticket.pk %}" class="btn">Réaffecter</a>
+        {% endif %}
+    </div>
+</div>
 
-    <br><br>
-    <a href="{% url 'incidents:ticket_list' %}">← Retour à la liste</a>
-</body>
-</html>
+{% if request.user.role == 'superviseur' %}
+<h3>Historique</h3>
+<table>
+    <tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Ancien statut</th><th>Nouveau statut</th><th>Commentaire</th></tr>
+    {% for h in historique %}
+    <tr>
+        <td class="mono">{{ h.date_action|date:"d/m/Y H:i" }}</td>
+        <td>{{ h.utilisateur|default:"—" }}</td>
+        <td>{{ h.action }}</td>
+        <td>{{ h.ancien_statut }}</td>
+        <td>{{ h.nouveau_statut }}</td>
+        <td>{{ h.commentaire }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" style="text-align:center; color:var(--text-faint); padding:24px;">Aucun historique.</td></tr>
+    {% endfor %}
+</table>
+{% endif %}
+
+<p style="margin-top:20px;"><a href="{% url 'incidents:ticket_list' %}" class="link">← Retour aux tickets</a></p>
+{% endblock %}

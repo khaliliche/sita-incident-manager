@@ -1,16 +1,13 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Nouveau ticket - ITmanager</title>
-</head>
-<body>
-    <h2>Créer un ticket</h2>
+{% extends 'base.html' %}
+{% block title %}Nouveau ticket - ITmanager{% endblock %}
+{% block content %}
+<h2>Créer un ticket</h2>
+<div class="panel">
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Créer le ticket</button>
+        <button type="submit" class="btn">Créer le ticket</button>
     </form>
-    <a href="{% url 'incidents:ticket_list' %}">← Retour à la liste</a>
-</body>
-</html>
+</div>
+<p><a href="{% url 'incidents:ticket_list' %}" class="link">← Retour aux tickets</a></p>
+{% endblock %}

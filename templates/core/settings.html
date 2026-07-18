@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Paramètres - ITmanager{% endblock %}
+{% block content %}
+<h2>Paramètres</h2>
+
+<h3>Zones</h3>
+<div class="actions" style="margin-bottom:12px;">
+    <a href="{% url 'core:zone_create' %}" class="btn">+ Ajouter une zone</a>
+</div>
+<table>
+    <tr><th>Nom</th><th></th></tr>
+    {% for z in zones %}
+    <tr>
+        <td>{{ z.nom }}</td>
+        <td>
+            <a href="{% url 'core:zone_edit' z.pk %}" class="link">Modifier</a> ·
+            <a href="{% url 'core:zone_delete' z.pk %}" class="link">Supprimer</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="2" style="text-align:center; color:var(--text-faint); padding:24px;">Aucune zone.</td></tr>
+    {% endfor %}
+</table>
+
+<h3>Équipements</h3>
+<div class="actions" style="margin-bottom:12px;">
+    <a href="{% url 'core:equipement_create' %}" class="btn">+ Ajouter un équipement</a>
+</div>
+<table>
+    <tr><th>Nom</th><th></th></tr>
+    {% for e in equipements %}
+    <tr>
+        <td>{{ e.nom }}</td>
+        <td>
+            <a href="{% url 'core:equipement_edit' e.pk %}" class="link">Modifier</a> ·
+            <a href="{% url 'core:equipement_delete' e.pk %}" class="link">Supprimer</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="2" style="text-align:center; color:var(--text-faint); padding:24px;">Aucun équipement.</td></tr>
+    {% endfor %}
+</table>
+
+<p style="margin-top:20px;"><a href="{% url 'incidents:ticket_list' %}" class="link">← Retour aux tickets</a></p>
+{% endblock %}

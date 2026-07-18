@@ -21,14 +21,15 @@ def ticket_list(request):
 
 
 @login_required
+@login_required
+@login_required
 def ticket_detail(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
-    historique = ticket.historique.all()
+    historique = ticket.historique.all() if request.user.role == 'superviseur' else None
     return render(request, 'incidents/ticket_detail.html', {
         'ticket': ticket,
         'historique': historique,
     })
-
 
 def affecter_agent(ticket):
     """Trouve un agent disponible dans la zone du ticket, selon la priorité."""
@@ -42,6 +43,10 @@ def affecter_agent(ticket):
         zone=ticket.zone,
         disponibilite='disponible'
     ).first()
+
+    if agent:
+        agent.disponibilite = 'occupe'
+        agent.save()
 
     return agent
 
@@ -87,6 +92,7 @@ def ticket_create(request):
 
     return render(request, 'incidents/ticket_form.html', {'form': form})
 @login_required
+@login_required
 def ticket_resoudre(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
     if ticket.assigne_a != request.user:
@@ -96,6 +102,9 @@ def ticket_resoudre(request, pk):
     ancien_statut = ticket.statut
     ticket.statut = 'resolu'
     ticket.save()
+
+    request.user.disponibilite = 'disponible'
+    request.user.save()
 
     TicketHistorique.objects.create(
         ticket=ticket,
@@ -108,7 +117,8 @@ def ticket_resoudre(request, pk):
     messages.success(request, "Ticket marqué comme résolu.")
     return redirect('incidents:ticket_detail', pk=ticket.pk)
 
-
+@login_required
+@login_required
 @login_required
 def ticket_escalader(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
@@ -116,18 +126,13 @@ def ticket_escalader(request, pk):
         messages.error(request, "Action non autorisée.")
         return redirect('incidents:ticket_list')
 
-    ingenieur = Utilisateur.objects.filter(
-        role='ingenieur', zone=ticket.zone, disponibilite='disponible'
-    ).first()
-
     ancien_statut = ticket.statut
-    if ingenieur:
-        ticket.assigne_a = ingenieur
-        ticket.statut = 'affecte'
-        commentaire = f"Escaladé vers {ingenieur}"
-    else:
-        ticket.statut = 'escalade'
-        commentaire = "Escaladé mais aucun ingénieur disponible dans la zone"
+
+    request.user.disponibilite = 'disponible'
+    request.user.save()
+
+    ticket.statut = 'escalade'
+    ticket.assigne_a = None
     ticket.save()
 
     TicketHistorique.objects.create(
@@ -135,13 +140,51 @@ def ticket_escalader(request, pk):
         utilisateur=request.user,
         action='Escalade',
         ancien_statut=ancien_statut,
-        nouveau_statut=ticket.statut,
-        commentaire=commentaire
+        nouveau_statut='escalade',
+        commentaire=f"Signalé par {request.user} — en attente de réaffectation par le Helpdesk"
     )
-    messages.warning(request, commentaire)
+    messages.warning(request, "Ticket escaladé. En attente de réaffectation par le Helpdesk.")
     return redirect('incidents:ticket_detail', pk=ticket.pk)
+@login_required
+def ticket_reaffecter(request, pk):
+    ticket = get_object_or_404(Ticket, pk=pk)
+    if request.user.role != 'helpdesk':
+        messages.error(request, "Seul le Helpdesk peut réaffecter un ticket.")
+        return redirect('incidents:ticket_list')
 
+    if ticket.statut != 'escalade':
+        messages.error(request, "Ce ticket n'est pas en attente de réaffectation.")
+        return redirect('incidents:ticket_detail', pk=ticket.pk)
 
+    from .forms import ReaffectationForm
+
+    if request.method == 'POST':
+        form = ReaffectationForm(request.POST, zone=ticket.zone)
+        if form.is_valid():
+            ingenieur = form.cleaned_data['ingenieur']
+            ancien_statut = ticket.statut
+
+            ticket.assigne_a = ingenieur
+            ticket.statut = 'affecte'
+            ticket.save()
+
+            ingenieur.disponibilite = 'occupe'
+            ingenieur.save()
+
+            TicketHistorique.objects.create(
+                ticket=ticket,
+                utilisateur=request.user,
+                action='Réaffectation',
+                ancien_statut=ancien_statut,
+                nouveau_statut='affecte',
+                commentaire=f"Réaffecté par {request.user} vers {ingenieur}"
+            )
+            messages.success(request, f"Ticket réaffecté à {ingenieur}.")
+            return redirect('incidents:ticket_detail', pk=ticket.pk)
+    else:
+        form = ReaffectationForm(zone=ticket.zone)
+
+    return render(request, 'incidents/ticket_reaffecter.html', {'form': form, 'ticket': ticket})
 @login_required
 def ticket_cloturer(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)

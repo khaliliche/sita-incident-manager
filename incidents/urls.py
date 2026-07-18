@@ -11,4 +11,5 @@ urlpatterns = [
     path('<int:pk>/resoudre/', views.ticket_resoudre, name='ticket_resoudre'),
     path('<int:pk>/escalader/', views.ticket_escalader, name='ticket_escalader'),
     path('<int:pk>/cloturer/', views.ticket_cloturer, name='ticket_cloturer'),
+    path('<int:pk>/reaffecter/', views.ticket_reaffecter, name='ticket_reaffecter'),
 ]

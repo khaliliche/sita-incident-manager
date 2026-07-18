@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Réaffecter le ticket #{{ ticket.pk }} - ITmanager{% endblock %}
+{% block content %}
+<h2>Réaffecter le ticket #{{ ticket.pk }} — Vol {{ ticket.numero_vol }}</h2>
+<div class="panel">
+    <p style="color:var(--text-dim); font-size:13px; margin-bottom:16px;">
+        Zone : {{ ticket.zone.nom|default:"-" }} · Priorité :
+        <span class="badge badge-{{ ticket.priorite }}"><span class="dot"></span>{{ ticket.priorite }}</span>
+    </p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn">Confirmer la réaffectation</button>
+    </form>
+</div>
+<p><a href="{% url 'incidents:ticket_detail' ticket.pk %}" class="link">← Retour au ticket</a></p>
+{% endblock %}

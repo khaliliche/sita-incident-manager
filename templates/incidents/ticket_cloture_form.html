@@ -1,17 +1,24 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Clôturer le ticket #{{ ticket.id }}</title>
-</head>
-<body>
-    <h2>Clôturer le ticket #{{ ticket.id }}</h2>
+{% extends 'base.html' %}
+{% block title %}Clôturer le ticket #{{ ticket.pk }} - ITmanager{% endblock %}
+{% block content %}
+<h2>Clôturer le ticket #{{ ticket.pk }} — Vol {{ ticket.numero_vol }}</h2>
+<div class="panel">
+    <p>
+        <span class="badge badge-{{ ticket.priorite }}"><span class="dot"></span>{{ ticket.priorite }}</span>
+        &nbsp;&nbsp;
+        <span class="badge status-{{ ticket.statut }}"><span class="dot"></span>{{ ticket.get_statut_display }}</span>
+    </p>
+    <br>
+    <p><strong>Description :</strong> {{ ticket.description }}</p>
+    <br>
     <form method="post">
         {% csrf_token %}
-        <label>Commentaire de clôture :</label><br>
-        <textarea name="commentaire" rows="4" cols="50"></textarea><br><br>
-        <button type="submit">Clôturer</button>
+        <label for="commentaire">Commentaire de clôture</label>
+        <textarea name="commentaire" id="commentaire" rows="4" placeholder="Résumé de la résolution..."></textarea>
+        <div class="actions" style="margin-top:14px;">
+            <button type="submit" class="btn">Confirmer la clôture</button>
+        </div>
     </form>
-    <a href="{% url 'incidents:ticket_detail' ticket.pk %}">← Annuler</a>
-</body>
-</html>
+</div>
+<p><a href="{% url 'incidents:ticket_detail' ticket.pk %}" class="link">← Retour au ticket</a></p>
+{% endblock %}

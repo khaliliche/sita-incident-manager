@@ -4,7 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Utilisateur
 from .forms import UtilisateurCreateForm, UtilisateurEditForm
-
+from django.contrib.auth.decorators import login_required as login_required_profil
+from incidents.models import Ticket
+from django.db.models import Count, Avg, F, ExpressionWrapper, DurationField
 
 def superviseur_required(view_func):
     @wraps(view_func)
@@ -50,3 +52,37 @@ def user_edit(request, pk):
     else:
         form = UtilisateurEditForm(instance=utilisateur)
     return render(request, 'accounts/user_form.html', {'form': form, 'mode': 'edition', 'utilisateur': utilisateur})
+
+
+
+@login_required_profil
+def profil(request):
+    user = request.user
+    context = {'utilisateur': user}
+
+    if user.role == 'helpdesk':
+        tickets_crees = Ticket.objects.filter(cree_par=user)
+        context['nb_crees'] = tickets_crees.count()
+        context['nb_clotures'] = tickets_crees.filter(statut='cloture').count()
+
+    elif user.role in ['technicien', 'ingenieur']:
+        tickets_traites = Ticket.objects.filter(assigne_a=user)
+        tickets_resolus = tickets_traites.filter(statut__in=['resolu', 'cloture'])
+        context['nb_assignes'] = tickets_traites.count()
+        context['nb_resolus'] = tickets_resolus.count()
+
+        duree_moyenne = tickets_traites.filter(
+            statut='cloture', date_cloture__isnull=False
+        ).annotate(
+            duree=ExpressionWrapper(F('date_cloture') - F('date_creation'), output_field=DurationField())
+        ).aggregate(moyenne=Avg('duree'))['moyenne']
+
+        if duree_moyenne:
+            total_seconds = int(duree_moyenne.total_seconds())
+            h, reste = divmod(total_seconds, 3600)
+            m, _ = divmod(reste, 60)
+            context['duree_moyenne'] = f"{h}h {m}min" if h else f"{m}min"
+        else:
+            context['duree_moyenne'] = None
+
+    return render(request, 'accounts/profil.html', context)

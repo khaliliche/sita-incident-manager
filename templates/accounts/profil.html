@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Mon profil - ITmanager{% endblock %}
+{% block content %}
+<h2>Mon profil</h2>
+
+<div class="panel" style="margin-bottom:20px;">
+    <p><strong>{{ utilisateur.first_name }} {{ utilisateur.last_name }}</strong></p>
+    <p style="color:var(--text-dim); font-size:13.5px; margin-top:4px;">
+        {{ utilisateur.username }} · {{ utilisateur.email|default:"Aucun email renseigné" }}
+    </p>
+    <p style="margin-top:10px;">
+        <span class="badge" style="color:var(--accent);"><span class="dot" style="background:var(--accent);"></span>{{ utilisateur.get_role_display }}</span>
+        {% if utilisateur.zone %}
+        &nbsp;&nbsp;<span style="color:var(--text-dim); font-size:13px;">Zone : {{ utilisateur.zone.nom }}</span>
+        {% endif %}
+        {% if utilisateur.disponibilite %}
+        &nbsp;&nbsp;<span class="badge {% if utilisateur.disponibilite == 'disponible' %}status-resolu{% else %}status-en_cours{% endif %}"><span class="dot"></span>{{ utilisateur.get_disponibilite_display }}</span>
+        {% endif %}
+    </p>
+</div>
+
+{% if utilisateur.role == 'helpdesk' %}
+<h3>Mon activité</h3>
+<div class="stat-grid">
+    <div class="stat-box"><div class="num">{{ nb_crees }}</div><div class="label">Tickets créés</div></div>
+    <div class="stat-box"><div class="num">{{ nb_clotures }}</div><div class="label">Tickets clôturés</div></div>
+</div>
+{% endif %}
+
+{% if utilisateur.role == 'technicien' or utilisateur.role == 'ingenieur' %}
+<h3>Mon activité</h3>
+<div class="stat-grid">
+    <div class="stat-box"><div class="num">{{ nb_assignes }}</div><div class="label">Tickets assignés (total)</div></div>
+    <div class="stat-box"><div class="num">{{ nb_resolus }}</div><div class="label">Tickets résolus</div></div>
+    {% if duree_moyenne %}
+    <div class="stat-box"><div class="num" style="font-size:18px;">{{ duree_moyenne }}</div><div class="label">Durée moy. résolution</div></div>
+    {% endif %}
+</div>
+{% endif %}
+
+<p style="margin-top:20px;"><a href="{% url 'incidents:ticket_list' %}" class="link">← Retour aux tickets</a></p>
+{% endblock %}

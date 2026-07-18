@@ -14,6 +14,9 @@
         <form method="post">
             {% csrf_token %}
             {{ form.as_p }}
+            <p style="text-align:center; margin-top:14px;">
+    <a href="{% url 'accounts:password_reset' %}" class="link" style="font-size:13px;">Mot de passe oublié ?</a>
+</p>
             <button type="submit" class="btn" style="width:100%; justify-content:center; margin-top:6px; padding:10px;">Se connecter</button>
         </form>
     </div>

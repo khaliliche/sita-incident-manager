@@ -304,7 +304,7 @@
         </nav>
         <div class="userbox">
             <span class="role">{{ request.user.get_role_display }}</span>
-            <span>{{ request.user.username }}</span>
+            <a href="{% url 'accounts:profil' %}" class="link" style="color:var(--text-dim); font-weight:400;">{{ request.user.username }}</a>
             <a href="{% url 'accounts:logout' %}" class="link">Déconnexion</a>
         </div>
         {% endif %}

@@ -1,7 +1,13 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard - ITmanager{% endblock %}
 {% block content %}
-<h2>Dashboard superviseur</h2>
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 style="margin-bottom:0;">Dashboard superviseur</h2>
+    <div class="actions" style="margin-top:0;">
+        <a href="{% url 'incidents:dashboard_export_excel' %}" class="btn btn-outline">Exporter Excel</a>
+        <a href="{% url 'incidents:dashboard_export_pdf' %}" class="btn btn-outline">Exporter PDF</a>
+    </div>
+</div>
 
 <div class="stat-grid">
     <div class="stat-box"><div class="num">{{ total }}</div><div class="label">Total tickets</div></div>

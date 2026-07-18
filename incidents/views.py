@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Ticket, TicketHistorique
@@ -274,3 +275,128 @@ def dashboard_superviseur(request):
         'duree_moyenne': duree_moyenne,
         'tickets_recents': tickets.order_by('-date_creation')[:10],
     })
+from django.http import HttpResponse
+
+
+@login_required
+def dashboard_export_excel(request):
+    if request.user.role != 'superviseur':
+        messages.error(request, "Accès réservé au superviseur.")
+        return redirect('incidents:ticket_list')
+
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill
+
+    tickets = Ticket.objects.all()
+    par_statut = tickets.values('statut').annotate(total=Count('id'))
+    par_zone = tickets.values('zone__nom').annotate(total=Count('id'))
+    par_priorite = tickets.values('priorite').annotate(total=Count('id'))
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Rapport ITmanager"
+
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="2563EB", end_color="2563EB", fill_type="solid")
+
+    ws.append(["Rapport superviseur - ITmanager"])
+    ws.append([f"Généré le {timezone.now().strftime('%d/%m/%Y %H:%M')}"])
+    ws.append([])
+    ws.append([f"Total tickets : {tickets.count()}"])
+    ws.append([])
+
+    ws.append(["Par statut"])
+    ws.append(["Statut", "Total"])
+    for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row):
+        for cell in row:
+            cell.font = header_font
+            cell.fill = header_fill
+    for s in par_statut:
+        ws.append([s['statut'], s['total']])
+
+    ws.append([])
+    ws.append(["Par zone"])
+    ws.append(["Zone", "Total"])
+    for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row):
+        for cell in row:
+            cell.font = header_font
+            cell.fill = header_fill
+    for z in par_zone:
+        ws.append([z['zone__nom'] or '-', z['total']])
+
+    ws.append([])
+    ws.append(["Par priorité"])
+    ws.append(["Priorité", "Total"])
+    for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row):
+        for cell in row:
+            cell.font = header_font
+            cell.fill = header_fill
+    for p in par_priorite:
+        ws.append([p['priorite'], p['total']])
+
+    for col in ws.columns:
+        max_len = max(len(str(c.value)) for c in col if c.value) if any(c.value for c in col) else 10
+        ws.column_dimensions[col[0].column_letter].width = max_len + 4
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="rapport_itmanager_{timezone.now().strftime("%Y%m%d")}.xlsx"'
+    wb.save(response)
+    return response
+
+
+@login_required
+def dashboard_export_pdf(request):
+    if request.user.role != 'superviseur':
+        messages.error(request, "Accès réservé au superviseur.")
+        return redirect('incidents:ticket_list')
+
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet
+    import io
+
+    tickets = Ticket.objects.all()
+    par_statut = tickets.values('statut').annotate(total=Count('id'))
+    par_zone = tickets.values('zone__nom').annotate(total=Count('id'))
+    par_priorite = tickets.values('priorite').annotate(total=Count('id'))
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2*cm, bottomMargin=2*cm)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("Rapport superviseur - ITmanager", styles['Title']))
+    elements.append(Paragraph(f"Généré le {timezone.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+    elements.append(Spacer(1, 0.5*cm))
+    elements.append(Paragraph(f"<b>Total tickets :</b> {tickets.count()}", styles['Normal']))
+    elements.append(Spacer(1, 0.7*cm))
+
+    def make_table(title, rows, headers):
+        elements.append(Paragraph(title, styles['Heading2']))
+        data = [headers] + rows
+        t = Table(data, colWidths=[9*cm, 4*cm])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2563EB')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E5EA')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F7F8FA')]),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        elements.append(t)
+        elements.append(Spacer(1, 0.6*cm))
+
+    make_table("Par statut", [[s['statut'], str(s['total'])] for s in par_statut], ["Statut", "Total"])
+    make_table("Par zone", [[z['zone__nom'] or '-', str(z['total'])] for z in par_zone], ["Zone", "Total"])
+    make_table("Par priorité", [[p['priorite'], str(p['total'])] for p in par_priorite], ["Priorité", "Total"])
+
+    doc.build(elements)
+    buffer.seek(0)
+
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="rapport_itmanager_{timezone.now().strftime("%Y%m%d")}.pdf"'
+    return response

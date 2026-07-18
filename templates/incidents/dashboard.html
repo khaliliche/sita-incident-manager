@@ -1,5 +1,8 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard - ITmanager{% endblock %}
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+{% endblock %}
 {% block content %}
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
     <h2 style="margin-bottom:0;">Dashboard superviseur</h2>
@@ -16,29 +19,21 @@
     {% endif %}
 </div>
 
-<h3>Par statut</h3>
-<table>
-    <tr><th>Statut</th><th>Total</th></tr>
-    {% for s in par_statut %}
-    <tr><td>{{ s.statut }}</td><td class="mono">{{ s.total }}</td></tr>
-    {% endfor %}
-</table>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+    <div class="panel">
+        <h3 style="margin-top:0;">Par statut</h3>
+        <canvas id="chartStatut" height="180"></canvas>
+    </div>
+    <div class="panel">
+        <h3 style="margin-top:0;">Par zone</h3>
+        <canvas id="chartZone" height="180"></canvas>
+    </div>
+</div>
 
-<h3>Par zone</h3>
-<table>
-    <tr><th>Zone</th><th>Total</th></tr>
-    {% for z in par_zone %}
-    <tr><td>{{ z.zone__nom|default:"-" }}</td><td class="mono">{{ z.total }}</td></tr>
-    {% endfor %}
-</table>
-
-<h3>Par priorité</h3>
-<table>
-    <tr><th>Priorité</th><th>Total</th></tr>
-    {% for p in par_priorite %}
-    <tr><td><span class="badge badge-{{ p.priorite }}"><span class="dot"></span>{{ p.priorite }}</span></td><td class="mono">{{ p.total }}</td></tr>
-    {% endfor %}
-</table>
+<div class="panel" style="margin-bottom:24px;">
+    <h3 style="margin-top:0;">Par priorité</h3>
+    <canvas id="chartPriorite" height="120"></canvas>
+</div>
 
 <h3>Tickets récents</h3>
 <table>
@@ -55,4 +50,38 @@
 </table>
 
 <p style="margin-top:20px;"><a href="{% url 'incidents:ticket_list' %}" class="link">← Retour aux tickets</a></p>
+
+<script>
+    const paletteBlue = ['#2563EB', '#60A5FA', '#93C5FD', '#DC2626', '#F59E0B', '#16A34A'];
+
+    const statutData = {{ chart_statut_json|safe }};
+    new Chart(document.getElementById('chartStatut'), {
+        type: 'doughnut',
+        data: {
+            labels: statutData.labels,
+            datasets: [{ data: statutData.data, backgroundColor: paletteBlue }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } } }
+    });
+
+    const zoneData = {{ chart_zone_json|safe }};
+    new Chart(document.getElementById('chartZone'), {
+        type: 'bar',
+        data: {
+            labels: zoneData.labels,
+            datasets: [{ label: 'Tickets', data: zoneData.data, backgroundColor: '#2563EB' }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const prioriteData = {{ chart_priorite_json|safe }};
+    new Chart(document.getElementById('chartPriorite'), {
+        type: 'bar',
+        data: {
+            labels: prioriteData.labels,
+            datasets: [{ label: 'Tickets', data: prioriteData.data, backgroundColor: paletteBlue }]
+        },
+        options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+    });
+</script>
 {% endblock %}

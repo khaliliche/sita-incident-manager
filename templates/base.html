@@ -290,7 +290,12 @@
         <a href="{% url 'incidents:ticket_list' %}" class="brand"><span class="dot"></span>ITmanager</a>
         {% if request.user.is_authenticated %}
         <nav class="mainnav">
-            <a href="{% url 'incidents:ticket_list' %}">Tickets</a>
+           <a href="{% url 'incidents:ticket_list' %}" style="position:relative;">
+    Tickets
+    {% if notif_count > 0 %}
+    <span style="position:absolute; top:-2px; right:-14px; background:var(--danger); color:#fff; font-size:10px; font-weight:700; padding:1px 5px; border-radius:9px; line-height:1.4;">{{ notif_count }}</span>
+    {% endif %}
+</a>
             {% if request.user.role == 'superviseur' %}
             <a href="{% url 'incidents:dashboard' %}">Dashboard</a>
             <a href="{% url 'accounts:user_list' %}">Utilisateurs</a>

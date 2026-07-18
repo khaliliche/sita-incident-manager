@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Ticket, TicketHistorique
-from .forms import TicketForm
+from .forms import TicketForm, ReaffectationForm
 from accounts.models import Utilisateur
+from core.models import Zone
 
 
 @login_required
@@ -17,11 +18,37 @@ def ticket_list(request):
         tickets = Ticket.objects.all().order_by('-date_creation')
     else:
         tickets = Ticket.objects.none()
-    return render(request, 'incidents/ticket_list.html', {'tickets': tickets})
+
+    statut = request.GET.get('statut', '')
+    priorite = request.GET.get('priorite', '')
+    zone_id = request.GET.get('zone', '')
+    q = request.GET.get('q', '').strip()
+
+    if statut:
+        tickets = tickets.filter(statut=statut)
+    if priorite:
+        tickets = tickets.filter(priorite=priorite)
+    if zone_id:
+        tickets = tickets.filter(zone_id=zone_id)
+    if q:
+        from django.db.models import Q
+        tickets = tickets.filter(
+            Q(numero_vol__icontains=q) | Q(compagnie_aerienne__icontains=q)
+        )
+
+    context = {
+        'tickets': tickets,
+        'zones': Zone.objects.all().order_by('nom'),
+        'statut_choices': Ticket.STATUT_CHOICES,
+        'priorite_choices': Ticket.PRIORITE_CHOICES,
+        'filtre_statut': statut,
+        'filtre_priorite': priorite,
+        'filtre_zone': zone_id,
+        'filtre_q': q,
+    }
+    return render(request, 'incidents/ticket_list.html', context)
 
 
-@login_required
-@login_required
 @login_required
 def ticket_detail(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
@@ -30,6 +57,7 @@ def ticket_detail(request, pk):
         'ticket': ticket,
         'historique': historique,
     })
+
 
 def affecter_agent(ticket):
     """Trouve un agent disponible dans la zone du ticket, selon la priorité."""
@@ -91,7 +119,8 @@ def ticket_create(request):
         form = TicketForm()
 
     return render(request, 'incidents/ticket_form.html', {'form': form})
-@login_required
+
+
 @login_required
 def ticket_resoudre(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
@@ -117,8 +146,7 @@ def ticket_resoudre(request, pk):
     messages.success(request, "Ticket marqué comme résolu.")
     return redirect('incidents:ticket_detail', pk=ticket.pk)
 
-@login_required
-@login_required
+
 @login_required
 def ticket_escalader(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
@@ -145,6 +173,8 @@ def ticket_escalader(request, pk):
     )
     messages.warning(request, "Ticket escaladé. En attente de réaffectation par le Helpdesk.")
     return redirect('incidents:ticket_detail', pk=ticket.pk)
+
+
 @login_required
 def ticket_reaffecter(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
@@ -155,8 +185,6 @@ def ticket_reaffecter(request, pk):
     if ticket.statut != 'escalade':
         messages.error(request, "Ce ticket n'est pas en attente de réaffectation.")
         return redirect('incidents:ticket_detail', pk=ticket.pk)
-
-    from .forms import ReaffectationForm
 
     if request.method == 'POST':
         form = ReaffectationForm(request.POST, zone=ticket.zone)
@@ -185,6 +213,8 @@ def ticket_reaffecter(request, pk):
         form = ReaffectationForm(zone=ticket.zone)
 
     return render(request, 'incidents/ticket_reaffecter.html', {'form': form, 'ticket': ticket})
+
+
 @login_required
 def ticket_cloturer(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
@@ -213,6 +243,8 @@ def ticket_cloturer(request, pk):
         return redirect('incidents:ticket_detail', pk=ticket.pk)
 
     return render(request, 'incidents/ticket_cloture_form.html', {'ticket': ticket})
+
+
 from django.db.models import Count, Avg, F, ExpressionWrapper, DurationField
 
 

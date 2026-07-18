@@ -3,11 +3,53 @@
 {% block content %}
 <h2>Tickets</h2>
 
+<div class="panel" style="margin-bottom:16px;">
+    <form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+        <div style="flex:1; min-width:180px;">
+            <label for="q">Recherche</label>
+            <input type="text" name="q" id="q" placeholder="N° vol ou compagnie..." value="{{ filtre_q }}">
+        </div>
+        <div style="min-width:150px;">
+            <label for="statut">Statut</label>
+            <select name="statut" id="statut">
+                <option value="">Tous</option>
+                {% for value, label in statut_choices %}
+                <option value="{{ value }}" {% if filtre_statut == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="min-width:120px;">
+            <label for="priorite">Priorité</label>
+            <select name="priorite" id="priorite">
+                <option value="">Toutes</option>
+                {% for value, label in priorite_choices %}
+                <option value="{{ value }}" {% if filtre_priorite == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="min-width:150px;">
+            <label for="zone">Zone</label>
+            <select name="zone" id="zone">
+                <option value="">Toutes</option>
+                {% for z in zones %}
+                <option value="{{ z.pk }}" {% if filtre_zone == z.pk|stringformat:"s" %}selected{% endif %}>{{ z.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="btn">Filtrer</button>
+            <a href="{% url 'incidents:ticket_list' %}" class="btn btn-outline">Réinitialiser</a>
+        </div>
+    </form>
+</div>
+
 <div class="actions" style="margin-bottom:16px;">
     {% if request.user.role == 'helpdesk' %}
     <a href="{% url 'incidents:ticket_create' %}" class="btn">+ Nouveau ticket</a>
     {% endif %}
 </div>
+
+<p style="color:var(--text-dim); font-size:13px; margin-bottom:10px;">{{ tickets|length }} ticket{{ tickets|length|pluralize }} trouvé{{ tickets|length|pluralize }}</p>
 
 <table>
     <tr>
@@ -26,7 +68,7 @@
         <td><a href="{% url 'incidents:ticket_detail' ticket.pk %}" class="link">Voir</a></td>
     </tr>
     {% empty %}
-    <tr><td colspan="9" style="text-align:center; color:var(--text-faint); padding:24px;">Aucun ticket pour le moment.</td></tr>
+    <tr><td colspan="9" style="text-align:center; color:var(--text-faint); padding:24px;">Aucun ticket ne correspond à ces critères.</td></tr>
     {% endfor %}
 </table>
 {% endblock %}
